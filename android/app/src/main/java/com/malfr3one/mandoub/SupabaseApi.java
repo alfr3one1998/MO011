@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 public class SupabaseApi {
@@ -52,6 +53,12 @@ public class SupabaseApi {
         body.put("refresh_token", refreshToken);
         JSONObject json = requestJson("POST", "/auth/v1/token?grant_type=refresh_token", body, null, null);
         return parseAuth(json, false);
+    }
+
+    public JSONObject updatePassword(String accessToken, String newPassword) throws Exception {
+        JSONObject body = new JSONObject();
+        body.put("password", newPassword);
+        return requestJson("PUT", "/auth/v1/user", body, accessToken, null);
     }
 
     private AuthResult parseAuth(JSONObject json, boolean needsConfirmation) {
@@ -101,6 +108,40 @@ public class SupabaseApi {
 
     public void deleteRows(String accessToken, String tableAndFilter) throws Exception {
         request("DELETE", "/rest/v1/" + tableAndFilter, null, accessToken, null);
+    }
+
+    public String uploadBytes(String accessToken, String bucket, String path, byte[] data, String contentType) throws Exception {
+        StringBuilder encodedPath = new StringBuilder();
+        String[] parts = path.split("/");
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) encodedPath.append('/');
+            encodedPath.append(URLEncoder.encode(parts[i], StandardCharsets.UTF_8).replace("+", "%20"));
+        }
+        HttpURLConnection connection = (HttpURLConnection) new URL(BASE_URL + "/storage/v1/object/" + bucket + "/" + encodedPath).openConnection();
+        connection.setRequestMethod("POST");
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(30000);
+        connection.setDoOutput(true);
+        connection.setRequestProperty("apikey", API_KEY);
+        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+        connection.setRequestProperty("Content-Type", contentType == null ? "application/octet-stream" : contentType);
+        connection.setRequestProperty("x-upsert", "true");
+        try (OutputStream output = connection.getOutputStream()) {
+            output.write(data);
+        }
+        int status = connection.getResponseCode();
+        InputStream stream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
+        String text = readAll(stream);
+        connection.disconnect();
+        if (status < 200 || status >= 300) {
+            String message = text;
+            try {
+                JSONObject error = new JSONObject(text);
+                message = error.optString("message", error.optString("error", text));
+            } catch (Exception ignored) {}
+            throw new ApiException(status, message);
+        }
+        return path;
     }
 
     private JSONObject requestJson(String method, String path, JSONObject body, String accessToken, String prefer) throws Exception {
