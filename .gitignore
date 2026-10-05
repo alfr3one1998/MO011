@@ -44,3 +44,8 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+
+# Protected database exports and local compiler cache
+*.tsbuildinfo
+*data-export*.json
+*database-backup*
