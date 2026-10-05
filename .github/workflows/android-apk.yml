@@ -35,12 +35,17 @@ jobs:
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
+      - name: Apply source hotfix
+        shell: bash
+        run: |
+          sed -i 's/authenticate(mail, p, c);/authenticate(m, p, c);/' android/app/src/main/java/com/malfr3one/mandoub/MainActivity.java
+
       - name: Build debug APK
         run: gradle -p android :app:assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: mandoub-debug-apk
+          name: mandoub-v3-redesign-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
