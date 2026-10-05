@@ -21,7 +21,13 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '22'
+          package-manager-cache: false
+      - name: Set up pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.25.0 --activate
+          pnpm --version
       - name: Install dependencies
-        run: npm run install:ci
+        run: pnpm install --frozen-lockfile
       - name: Build
         run: npm run build
