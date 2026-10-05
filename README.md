@@ -22,3 +22,7 @@
 
 ## التحقق
 تم فحص TypeScript وبناء الإنتاج وترحيل SQLite ومنطق عدم تسوية الطلبات غير المسلمة. لم يتوفر اختبار متصفح في بيئة الإنشاء.
+
+## Supabase integration (pending connection)
+
+The `feat/supabase-storage` branch prepares a server-only Supabase backend, SQL schema and resumable import tool. Production remains on D1 until the target Supabase project is connected and the migration is verified. See [supabase/README.md](supabase/README.md) for activation and verification steps. Runtime secrets must never be committed.
