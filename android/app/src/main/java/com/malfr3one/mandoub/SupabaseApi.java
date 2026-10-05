@@ -74,6 +74,15 @@ public class SupabaseApi {
         return "true".equalsIgnoreCase(text.trim());
     }
 
+    public JSONObject createDriverAccount(String accessToken, String name, String email, String phone, String password) throws Exception {
+        JSONObject body = new JSONObject();
+        body.put("name", name.trim());
+        body.put("email", email.trim().toLowerCase());
+        body.put("phone", phone.trim());
+        body.put("password", password);
+        return requestJson("POST", "/functions/v1/admin-create-driver", body, accessToken, null);
+    }
+
     public JSONArray getRows(String accessToken, String path) throws Exception {
         String text = request("GET", "/rest/v1/" + path, null, accessToken, null);
         return new JSONArray(text);
@@ -90,6 +99,10 @@ public class SupabaseApi {
         return new JSONArray(text);
     }
 
+    public void deleteRows(String accessToken, String tableAndFilter) throws Exception {
+        request("DELETE", "/rest/v1/" + tableAndFilter, null, accessToken, null);
+    }
+
     private JSONObject requestJson(String method, String path, JSONObject body, String accessToken, String prefer) throws Exception {
         return new JSONObject(request(method, path, body == null ? null : body.toString(), accessToken, prefer));
     }
@@ -98,7 +111,7 @@ public class SupabaseApi {
         HttpURLConnection connection = (HttpURLConnection) new URL(BASE_URL + path).openConnection();
         connection.setRequestMethod(method);
         connection.setConnectTimeout(15000);
-        connection.setReadTimeout(20000);
+        connection.setReadTimeout(25000);
         connection.setRequestProperty("apikey", API_KEY);
         connection.setRequestProperty("Accept", "application/json");
         connection.setRequestProperty("Content-Type", "application/json");
